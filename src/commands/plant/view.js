@@ -30,13 +30,18 @@ module.exports = {
         await level.save()
       }
 
-      let cooldown = await Cooldown.findOne({
+      let waterCooldown = await Cooldown.findOne({
         commandName: 'water',
         userId: targetUserID,
       })
 
+      let harvestCooldown = await Cooldown.findOne({
+        commandName: 'harvest',
+        userId: targetUserID,
+      })
+
       let description
-      if (cooldown && Date.now() < cooldown.endsAt) {
+      if (waterCooldown && Date.now() < waterCooldown.endsAt) {
         description = `${
           targetUserID === interaction.user.id
             ? 'Your'
@@ -46,11 +51,25 @@ module.exports = {
             ? 'You'
             : `${targetUser.user.username}`
         } can water it again in \`${getCooldownRemaining(
-          cooldown.endsAt,
+          waterCooldown.endsAt,
           Date.now()
         )}\``
       } else {
-        description = `The plant is ready to be watered! Use \`/water\` to water your plant.`
+        description = `The plant is ready to be watered! Use \`/water\` to water your plant 💧.`
+      }
+
+      let description2
+      if (harvestCooldown && Date.now() < harvestCooldown.endsAt) {
+        description2 = `${
+          targetUserID === interaction.user.id
+            ? 'You'
+            : `${targetUser.user.username}`
+        } can harvest your plant again in \`${getCooldownRemaining(
+          harvestCooldown.endsAt,
+          Date.now()
+        )}\``
+      } else {
+        description2 = `The plant is ready to be harvested! Use \`/harvest\` to collect your fruits 🍎.`
       }
 
       // Default variables (small plant)
@@ -74,7 +93,7 @@ module.exports = {
         .setFooter({
           text: `${targetUser.user.username}'s plant is on level ${level.level} ${emote}`,
         })
-        .setDescription(description)
+        .setDescription(`${description}\n${description2}`)
         .setImage(image)
         .addFields([
           { name: 'Balance', value: `🪙 ${level.coins}`, inline: true },
